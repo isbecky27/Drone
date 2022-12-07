@@ -19,7 +19,7 @@ if prj_path not in sys.path:
 
 from lib.test.evaluation.environment import env_settings
 from lib.test.evaluation import get_dataset
-from OSTrack.lib.test.tracker import OSTrack
+from lib.test.tracker import OSTrack
 
 def get_parameters(tracker, tracker_params):
     """Get parameters."""
