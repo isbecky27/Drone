@@ -4,7 +4,7 @@ import multiprocessing
 import numpy as np
 import importlib
 import argparse
-from load_yaml import get_params
+from utilities.load_yaml import get_params
 
 ## Yolov7
 prj_path = os.path.join(os.path.dirname(__file__), './yolov7')
