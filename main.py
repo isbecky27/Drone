@@ -5,6 +5,7 @@ import numpy as np
 import importlib
 import argparse
 from utilities.load_yaml import get_params
+from utilities.selection_bbox import selection_bbox
 
 ## Yolov7
 prj_path = os.path.join(os.path.dirname(__file__), './yolov7')
@@ -46,12 +47,13 @@ for i in range(1):
     elif update:
         bboxes = detect(cfg)
 
-    ## Selective Module
+    ## Selection Module
     # bbox = {'init_bbox': [691, 365, 36, 22]}
     bboxes = np.array(bboxes)
     bboxes[:, 2] -= bboxes[:, 0]
     bboxes[:, 3] -= bboxes[:, 1]
-    bbox = {'init_bbox': bboxes[0]}
+    # bbox = {'init_bbox': bboxes[0]}
+    bbox = {'init_bbox': selection_bbox(bboxes, [691, 365, 36, 22])}
 
     ## Tracker
     img = cv2.imread('./test/000001.jpg')
