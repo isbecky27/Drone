@@ -1,12 +1,12 @@
 ## Yolov7
-weights: './yolov7/weights/yolov7-P2/1280/best.pt' # model.pt path(s)
+weights: './yolov7/weights/yolov7x.pt' # model.pt path(s)
 source: './test/000001.jpg' # source  # file/folder, 0 for webcam
 img_size: 1280 # inference size (pixels)
 conf_thres: 0.25 # object confidence threshold
 iou_thres: 0.45 # IOU threshold for NMS
 device: '' # cuda device, i.e. 0 or 0,1,2,3 or cpu
 view_img: False # display results
-save_txt: True # save results to *.txt
+save_txt: False # save results to *.txt
 save_conf: False # save confidences in --save-txt labels
 nosave: False # do not save images/videos
 classes:  # filter by class: --class 0, or --class 0 2 3
@@ -14,7 +14,7 @@ agnostic_nms: False # class-agnostic NMS
 augment: False # augmented inference
 update: False # update all models
 project: 'runs/detect' # save results to project/name
-name: 'exp' # save results to project/name
+name: 'UAV/boat4' # save results to project/name
 exist_ok: False # existing project/name ok, do not increment
 no_trace: True # don't trace model
 
