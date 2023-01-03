@@ -6,6 +6,7 @@ import importlib
 import argparse
 from utilities.load_yaml import get_params
 from utilities.selection_bbox import selection_bbox
+from utilities.manual_selection import manual_selection
 
 ## Yolov7
 prj_path = os.path.join(os.path.dirname(__file__), './yolov7')
@@ -34,7 +35,7 @@ cfg = get_params('./config.yaml')
 tracker_cfg = get_parameters(cfg.tracker, cfg.tracker_params)
 
 ## Initialize
-tracker = OSTrack(tracker_cfg, None, threshold=2.0)
+tracker = OSTrack(tracker_cfg, None, threshold=1.0)
 
 seq = 'person20'
 prev_bbox = None
@@ -44,18 +45,25 @@ for idx in range(1, len(os.listdir(f'./data/{seq}/'))+1):
     ## Detection
     if not init:
         cfg.source = f'./data/{seq}/{str(idx).zfill(6)}.jpg'
-        bboxes = detect(cfg)
+        result_img, bboxes = detect(cfg)
         if bboxes == []:
             continue
     elif update:
         cfg.source = f'./data/{seq}/{str(idx).zfill(6)}.jpg'
-        bboxes = detect(cfg)
+        result_img, bboxes = detect(cfg)
         print("Detection:", idx)
 
     ## Manual Selection
     if not init:
-        bbox = {'init_bbox': [453,367,69,159]}
-        prev_bbox = bbox['init_bbox']
+        selected_bbox = manual_selection(result_img, bboxes)
+        # print(selected_bbox)
+        if selected_bbox is not None:
+            selected_bbox[2] -= selected_bbox[0]
+            selected_bbox[3] -= selected_bbox[1]
+            bbox = {'init_bbox': selected_bbox}
+            prev_bbox = bbox['init_bbox']
+        else:
+            continue
     ## Selection Module
     else:
         bboxes = np.array(bboxes)
