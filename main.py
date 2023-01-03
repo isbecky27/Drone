@@ -88,7 +88,7 @@ for idx in range(1, seq_len + 1):
         bbox = {'init_bbox': target}
 
     ## Tracker
-    img = cv2.imread(f'./data/{seq}/{str(idx).zfill(6)}.jpg')
+    img = cv2.imread(f'./data/UAV/{seq}/{str(idx).zfill(6)}.jpg')
     if update and (target is not None):
         update = False
         time1 = time_synchronized()
