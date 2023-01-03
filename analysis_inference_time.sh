@@ -1,6 +1,7 @@
 #!/bin/bash
-END=4
-for interval in $(seq 4 $END)
+START=0
+END=30
+for interval in $(seq $START $END)
 do  
     echo "The interval of template is $interval."  
     python main.py --interval $interval
