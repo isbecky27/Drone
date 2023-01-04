@@ -85,7 +85,10 @@ for idx in range(1, seq_len + 1):
     if 'NaN' not in box_gt:
         box_gt = [int(float(i)) for i in box_gt]
         target = selection_bbox(bboxes, box_gt)
-        bbox = {'init_bbox': target}
+        if target is None:
+            bbox = {'init_bbox': box_gt}
+        else:
+            bbox = {'init_bbox': target}
 
     ## Tracker
     img = cv2.imread(f'./data/UAV123/{seq}/{str(idx).zfill(6)}.jpg')
