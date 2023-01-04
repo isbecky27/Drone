@@ -1,5 +1,5 @@
 ## Yolov7
-weights: './yolov7/weights/yolov7-P2/1280/best.pt' # model.pt path(s)
+weights: './yolov7/weights/yolov7x.pt' # model.pt path(s)
 source: './test/000001.jpg' # source  # file/folder, 0 for webcam
 img_size: 1280 # inference size (pixels)
 conf_thres: 0.25 # object confidence threshold
