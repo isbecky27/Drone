@@ -1,0 +1,6 @@
+__pycache__/
+OSTrack
+yolov7
+data/
+runs/
+output/

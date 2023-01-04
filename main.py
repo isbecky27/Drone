@@ -1,5 +1,5 @@
 # Online System
-import os, sys, cv2, torch
+import os, sys, cv2, time, torch
 import multiprocessing
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ from utilities.manual_selection import manual_selection
 prj_path = os.path.join(os.path.dirname(__file__), './yolov7')
 if prj_path not in sys.path:
     sys.path.append(prj_path)
-from detect import detect
+from detect import detect, init_global_model
 from yolov7.utils.torch_utils import time_synchronized
 
 ## OSTrack
@@ -34,21 +34,13 @@ def get_parameters(tracker, tracker_params):
 
 ## Arguments
 parser = argparse.ArgumentParser()
+parser.add_argument('--seq', type=str, default='boat4')
 parser.add_argument('--interval', type=int, default=0) # 0 is all tracking.
 parser.add_argument('--threshold', type=float, default=1)
 args = parser.parse_args()
-
-## Get Parameters
-cfg = get_params('./config.yaml')
-tracker_cfg = get_parameters(cfg.tracker, cfg.tracker_params)
-
-## Initialize
-tracker = OSTrack(tracker_cfg, None, threshold=1.0)
-
-seq = 'boat4'
+seq = args.seq
 seq_len = len(os.listdir(f'./data/UAV123/{seq}/'))
 interval = args.interval
-update, total_time = False, 0
 
 ## Load Ground Truth
 with open(f'./data/UAV123/anno/UAV123/{seq}.txt', 'r') as f:
@@ -65,6 +57,20 @@ if not os.path.exists(f'{result_path}.csv'):
 else:
     df = pd.read_csv(f'{result_path}.csv', index_col=False)
 
+f = open(f'{result_path}_interval{interval}.txt', 'w')
+f.write(f'Start Time: {time.time()}\n')
+
+## Get Parameters
+cfg = get_params('./config.yaml')
+tracker_cfg = get_parameters(cfg.tracker, cfg.tracker_params)
+
+## Initialize
+f.write(f'Start to Loading Model: {time.time()}\n')
+tracker = OSTrack(tracker_cfg, None, threshold=1.0) # OSTrack
+init_global_model(cfg) # yolov7
+f.write(f'End of Loading Model: {time.time()}\n')
+
+update, total_time = False, 0
 for idx in range(1, seq_len + 1):
 
     ## Detection
@@ -113,5 +119,7 @@ for idx in range(1, seq_len + 1):
     # image = cv2.rectangle(img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), color, thickness = 2)
     # cv2.imwrite(f'{result_path}/{str(idx).zfill(6)}.jpg', image)
 
+f.write(f'End Time: {time.time()}\n')
+f.close()
 df.loc[len(df.index)] = [seq, seq_len, interval, total_time, total_time / seq_len]
 df.to_csv(f'{result_path}.csv', index=False)
