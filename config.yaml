@@ -8,7 +8,7 @@ device: '' # cuda device, i.e. 0 or 0,1,2,3 or cpu
 view_img: False # display results
 save_txt: False # save results to *.txt
 save_conf: False # save confidences in --save-txt labels
-nosave: False # do not save images/videos
+nosave: True # do not save images/videos
 classes:  # filter by class: --class 0, or --class 0 2 3
 agnostic_nms: False # class-agnostic NMS
 augment: False # augmented inference
