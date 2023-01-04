@@ -36,6 +36,11 @@ tracker_cfg = get_parameters(cfg.tracker, cfg.tracker_params)
 
 ## Initialize
 tracker = OSTrack(tracker_cfg, None, threshold=1.0)
+try:
+    from detect import init_global_model
+    init_global_model(cfg)
+except:
+    print('Global init failed, fall back to original method')
 
 seq = 'person20'
 prev_bbox = None
