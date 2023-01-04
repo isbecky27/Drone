@@ -1,6 +1,6 @@
 ## Yolov7
 weights: './yolov7/weights/yolov7x.pt' # model.pt path(s)
-source: './test/000001.jpg' # source  # file/folder, 0 for webcam
+source: '' # source  # file/folder, 0 for webcam
 img_size: 1280 # inference size (pixels)
 conf_thres: 0.25 # object confidence threshold
 iou_thres: 0.45 # IOU threshold for NMS
@@ -14,8 +14,8 @@ agnostic_nms: False # class-agnostic NMS
 augment: False # augmented inference
 update: False # update all models
 project: 'runs/detect' # save results to project/name
-name: 'exp' # save results to project/name
-exist_ok: False # existing project/name ok, do not increment
+name: 'UAV123' # save results to project/name
+exist_ok: True # existing project/name ok, do not increment
 no_trace: True # don't trace model
 
 ## OSTrack

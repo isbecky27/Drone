@@ -12,7 +12,7 @@ from utilities.manual_selection import manual_selection
 prj_path = os.path.join(os.path.dirname(__file__), './yolov7')
 if prj_path not in sys.path:
     sys.path.append(prj_path)
-from detect import detect
+from detect import detect, init_global_model
 
 ## OSTrack
 prj_path = os.path.join(os.path.dirname(__file__), './OSTrack')
@@ -35,9 +35,10 @@ cfg = get_params('./config.yaml')
 tracker_cfg = get_parameters(cfg.tracker, cfg.tracker_params)
 
 ## Initialize
-tracker = OSTrack(tracker_cfg, None, threshold=1.0)
+tracker = OSTrack(tracker_cfg, None, threshold=1.0) # OSTrack
+init_global_model(cfg) # Yolov7
 
-seq = 'person20'
+seq = 'boat4'
 prev_bbox = None
 init, update = False, False
 for idx in range(1, len(os.listdir(f'./data/{seq}/'))+1):
