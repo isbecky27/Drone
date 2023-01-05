@@ -12,7 +12,8 @@ from utilities.manual_selection import manual_selection
 prj_path = os.path.join(os.path.dirname(__file__), './yolov7')
 if prj_path not in sys.path:
     sys.path.append(prj_path)
-from detect import detect, init_global_model
+from detect import init_model, detect_simple
+from utils.general import increment_path
 
 ## OSTrack
 prj_path = os.path.join(os.path.dirname(__file__), './OSTrack')
@@ -34,24 +35,31 @@ def get_parameters(tracker, tracker_params):
 cfg = get_params('./config.yaml')
 tracker_cfg = get_parameters(cfg.tracker, cfg.tracker_params)
 
+## LoadImages
+from utilities.datasets import LoadImages
+dataset = LoadImages(cfg.source)
+
+## Directories
+from pathlib import Path
+save_dir = Path(increment_path(Path(cfg.project) / cfg.name, exist_ok=cfg.exist_ok))  # increment run
+(save_dir / 'labels' if cfg.save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
+cfg.save_dir = save_dir
+
 ## Initialize
 tracker = OSTrack(tracker_cfg, None, threshold=1.0) # OSTrack
-init_global_model(cfg) # Yolov7
+init_model(cfg) # Yolov7
 
-seq = 'boat4'
 prev_bbox = None
 init, update = False, False
-for idx in range(1, len(os.listdir(f'./data/{seq}/'))+1):
+for idx, (path, img) in enumerate(dataset, start=1):
 
     ## Detection
     if not init:
-        cfg.source = f'./data/{seq}/{str(idx).zfill(6)}.jpg'
-        result_img, bboxes = detect(cfg)
+        result_img, bboxes = detect_simple(cfg, path, img)
         if bboxes == []:
             continue
     elif update:
-        cfg.source = f'./data/{seq}/{str(idx).zfill(6)}.jpg'
-        result_img, bboxes = detect(cfg)
+        result_img, bboxes = detect_simple(cfg, path, img)
         print("Detection:", idx)
 
     ## Manual Selection
@@ -74,7 +82,6 @@ for idx in range(1, len(os.listdir(f'./data/{seq}/'))+1):
         bbox = {'init_bbox': target}
 
     ## Tracker
-    img = cv2.imread(f'./data/{seq}/{str(idx).zfill(6)}.jpg')
     if (not init) or (update and (target is not None)):
         init, update = True, False
         tracker.initialize(img, bbox)
@@ -86,11 +93,10 @@ for idx in range(1, len(os.listdir(f'./data/{seq}/'))+1):
         prev_bbox = output['target_bbox']
 
     ## Show Results
-    result_path = f'./output/{seq}'
-    if not os.path.exists(result_path):
-        os.makedirs(result_path)
     box = output['target_bbox']
     box = [int(float(i)) for i in box]
     color = (255, 0, 0)
     image = cv2.rectangle(img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), color, thickness = 2)
-    cv2.imwrite(f'{result_path}/{str(idx).zfill(6)}.jpg', image)
+    p = Path(path)  # to Path
+    save_path = str(save_dir / p.name)
+    cv2.imwrite(save_path, image)
