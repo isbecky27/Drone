@@ -21,3 +21,5 @@ no_trace: True # don't trace model
 ## OSTrack
 tracker: 'ostrack'
 tracker_params: 'vitb_384_mae_ce_32x4_ep300'
+threshold_conf: 1.0
+threshold_iou: 0.5

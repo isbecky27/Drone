@@ -46,7 +46,7 @@ save_dir = Path(increment_path(Path(cfg.project) / cfg.name, exist_ok=cfg.exist_
 cfg.save_dir = save_dir
 
 ## Initialize
-tracker = OSTrack(tracker_cfg, None, threshold=1.0) # OSTrack
+tracker = OSTrack(tracker_cfg, None, threshold=cfg.threshold_conf) # OSTrack
 init_model(cfg) # Yolov7
 
 prev_bbox = None
@@ -78,7 +78,7 @@ for idx, (path, img) in enumerate(dataset, start=1):
         bboxes = np.array(bboxes)
         bboxes[:, 2] -= bboxes[:, 0]
         bboxes[:, 3] -= bboxes[:, 1]
-        target = selection_bbox(bboxes, prev_bbox)
+        target = selection_bbox(bboxes, prev_bbox, cfg.threshold_iou)
         bbox = {'init_bbox': target}
 
     ## Tracker
