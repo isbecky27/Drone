@@ -14,7 +14,7 @@ prj_path = os.path.join(os.path.dirname(__file__), './yolov7')
 if prj_path not in sys.path:
     sys.path.append(prj_path)
 from detect import init_model, detect_simple
-gfrom utils.torch_utils import time_synchronized
+from utils.torch_utils import time_synchronized
 from utils.general import increment_path
 
 ## OSTrack
