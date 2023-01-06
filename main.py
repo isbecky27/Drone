@@ -1,11 +1,12 @@
 # Online System
-import os, sys, cv2, time, torch
+import os, sys, cv2, time, torch, subprocess
 import multiprocessing
 import numpy as np
 import pandas as pd
 import importlib
 import argparse
 from subprocess import check_output
+from utilities.parse import Parse
 from utilities.load_yaml import get_params
 from utilities.selection_bbox import selection_bbox
 from utilities.manual_selection import manual_selection
@@ -34,11 +35,21 @@ def get_parameters(tracker, tracker_params):
     params.debug = False
     return params
 
+def prepare_command(log_file, interval=1000, verbose=False):
+    tegrastats_cmd = f"sudo -S tegrastats --interval {interval} < password.secret"
+
+    if verbose:
+        tegrastats_cmd = tegrastats_cmd + " --verbose"
+
+    cmd = f"{{ echo $(date -u)'\n'{time.time()} & {tegrastats_cmd}; }} > {log_file}"
+    return cmd
+
 ## Arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--seq', type=str, default='boat4')
 parser.add_argument('--interval', type=int, default=0) # 0 is all tracking.
 parser.add_argument('--threshold', type=float, default=1)
+parser.add_argument('--tegrastats', type=bool, default=False)
 args = parser.parse_args()
 seq = args.seq
 seq_len = len(os.listdir(f'./data/UAV123/{seq}/'))
@@ -76,6 +87,17 @@ from pathlib import Path
 save_dir = Path(increment_path(Path(cfg.project) / cfg.name, exist_ok=cfg.exist_ok))  # increment run
 (save_dir / 'labels' if cfg.save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
 cfg.save_dir = save_dir
+
+log_file = f'{result_path}_log_{interval}.txt'
+if args.tegrastats and (interval == 1 or interval % 5 == 0):
+    cmd = prepare_command(log_file)
+    process = None
+    try:
+        process = subprocess.Popen(cmd, shell=True)
+        print("Running tegrastats...\nEnter 'exit' to stop tegrastats and parse data\n")
+    except subprocess.CalledProcessError:
+        print(f"Error running tegrastats!\nCommand used {cmd}")
+        return False
 
 ## Initialize
 f.write(f'Start to Loading Model: {time.time()}\n')
@@ -141,10 +163,17 @@ for idx, (path, img) in enumerate(dataset, start=1):
 
 f.write(f'End Time: {time.time()}\n')
 f.close()
+
+if args.tegrastats and (interval == 1 or interval % 5 == 0):
+    subprocess.Popen("sudo tegrastats --stop", shell=True)
+    process.kill()
+    print("Successfully stopped tegrastats!")
+
+    parser = Parse(1000, log_file)
+    csv_file = parser.parse_file()
+
 df.loc[len(df.index)] = [seq, seq_len, interval, total_time, total_time / seq_len]
 df.to_csv(f'{result_path}.csv', index=False)
 
 if (not cfg.nosave) and cfg.save_video:
     check_output("ffmpeg -y -r 30 -f image2 -i " + str(save_dir) + f"/%" + "6d.jpg " + str(save_dir) + f".mp4", shell=True)
-
-    
