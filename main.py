@@ -41,7 +41,7 @@ def prepare_command(log_file, interval=1000, verbose=False):
     if verbose:
         tegrastats_cmd = tegrastats_cmd + " --verbose"
 
-    cmd = f"{{ echo $(date -u)'\n'{time.time()} & {tegrastats_cmd}; }} > {log_file}"
+    cmd = f"{{ echo {time.time()} & {tegrastats_cmd}; }} > {log_file}"
     return cmd
 
 ## Arguments
@@ -97,7 +97,6 @@ if args.tegrastats and (interval == 1 or interval % 5 == 0):
         print("Running tegrastats...\nEnter 'exit' to stop tegrastats and parse data\n")
     except subprocess.CalledProcessError:
         print(f"Error running tegrastats!\nCommand used {cmd}")
-        return False
 
 ## Initialize
 f.write(f'Start to Loading Model: {time.time()}\n')
