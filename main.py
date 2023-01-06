@@ -4,6 +4,7 @@ import multiprocessing
 import numpy as np
 import importlib
 import argparse
+from subprocess import check_output
 from utilities.load_yaml import get_params
 from utilities.selection_bbox import selection_bbox
 from utilities.manual_selection import manual_selection
@@ -38,6 +39,7 @@ tracker_cfg = get_parameters(cfg.tracker, cfg.tracker_params)
 ## LoadImages
 from utilities.datasets import LoadImages
 dataset = LoadImages(cfg.source)
+cfg.dataset_mode = dataset.mode
 
 ## Directories
 from pathlib import Path
@@ -53,13 +55,14 @@ prev_bbox = None
 init, update = False, False
 for idx, (path, img) in enumerate(dataset, start=1):
 
+    frame = getattr(dataset, 'frame', 0)
     ## Detection
     if not init:
-        result_img, bboxes = detect_simple(cfg, path, img)
+        result_img, bboxes = detect_simple(cfg, path, img, frame)
         if bboxes == []:
             continue
     elif update:
-        result_img, bboxes = detect_simple(cfg, path, img)
+        result_img, bboxes = detect_simple(cfg, path, img, frame)
         print("Detection:", idx)
 
     ## Manual Selection
@@ -93,10 +96,17 @@ for idx, (path, img) in enumerate(dataset, start=1):
         prev_bbox = output['target_bbox']
 
     ## Show Results
-    box = output['target_bbox']
-    box = [int(float(i)) for i in box]
-    color = (255, 0, 0)
-    image = cv2.rectangle(img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), color, thickness = 2)
-    p = Path(path)  # to Path
-    save_path = str(save_dir / p.name)
-    cv2.imwrite(save_path, image)
+    if not cfg.nosave:
+        box = output['target_bbox']
+        box = [int(float(i)) for i in box]
+        color = (255, 0, 0)
+        image = cv2.rectangle(img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), color, thickness = 2)
+        p = Path(path)  # to Path
+        save_path = str(save_dir / p.name)
+        if dataset.mode == 'video':
+            cv2.imwrite(f'{save_dir}/{str(frame).zfill(6)}.jpg', image)
+        else:
+            cv2.imwrite(save_path, image)
+
+if (not cfg.nosave) and cfg.save_video:
+    check_output("ffmpeg -y -r 30 -f image2 -i " + str(save_dir) + f"/%" + "6d.jpg " + str(save_dir) + f".mp4", shell=True)
