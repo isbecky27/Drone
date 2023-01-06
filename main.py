@@ -13,8 +13,8 @@ from utilities.manual_selection import manual_selection
 prj_path = os.path.join(os.path.dirname(__file__), './yolov7')
 if prj_path not in sys.path:
     sys.path.append(prj_path)
-from detect import detect, init_global_model
-from yolov7.utils.torch_utils import time_synchronized
+from detect import init_model, detect_simple
+from utils.general import increment_path
 
 ## OSTrack
 prj_path = os.path.join(os.path.dirname(__file__), './OSTrack')
@@ -64,20 +64,31 @@ f.write(f'Start Time: {time.time()}\n')
 cfg = get_params('./config.yaml')
 tracker_cfg = get_parameters(cfg.tracker, cfg.tracker_params)
 
+## LoadImages
+from utilities.datasets import LoadImages
+dataset = LoadImages(cfg.source)
+
+## Directories
+from pathlib import Path
+save_dir = Path(increment_path(Path(cfg.project) / cfg.name, exist_ok=cfg.exist_ok))  # increment run
+(save_dir / 'labels' if cfg.save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
+cfg.save_dir = save_dir
+
 ## Initialize
 f.write(f'Start to Loading Model: {time.time()}\n')
-tracker = OSTrack(tracker_cfg, None, threshold=1.0) # OSTrack
-init_global_model(cfg) # yolov7
+tracker = OSTrack(tracker_cfg, None, threshold=cfg.threshold_conf) # OSTrack
+init_model(cfg) # Yolov7
 f.write(f'End of Loading Model: {time.time()}\n')
 
 update, total_time = False, 0
-for idx in range(1, seq_len + 1):
+for idx, (path, img) in enumerate(dataset, start=1):
 
     ## Detection
     if (interval != 0 and (idx-1) % interval == 0) or (interval == 0 and idx == 1): 
-        cfg.source = f'./data/UAV123/{seq}/{str(idx).zfill(6)}.jpg'
-        result_img, bboxes, inference_time = detect(cfg)
-        total_time += inference_time
+        time1 = time_synchronized()
+        result_img, bboxes = detect_simple(cfg, path, img)
+        time2 = time_synchronized()
+        total_time += time2 - time1
         update = True
         # print("Detection:", idx)
     if interval == 1:
@@ -90,13 +101,12 @@ for idx in range(1, seq_len + 1):
     box_gt = gt_box[idx-1].split(',')
     if 'NaN' not in box_gt:
         box_gt = [int(float(i)) for i in box_gt]
-        target = selection_bbox(bboxes, box_gt)
+        target = selection_bbox(bboxes, box_gt, cfg.threshold_iou)
         if target is None:
             target = box_gt
         bbox = {'init_bbox': target}
 
     ## Tracker
-    img = cv2.imread(f'./data/UAV123/{seq}/{str(idx).zfill(6)}.jpg')
     if update and (target is not None):
         update = False
         time1 = time_synchronized()
@@ -117,7 +127,9 @@ for idx in range(1, seq_len + 1):
     # box = [int(float(i)) for i in box]
     # color = (255, 0, 0)
     # image = cv2.rectangle(img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), color, thickness = 2)
-    # cv2.imwrite(f'{result_path}/{str(idx).zfill(6)}.jpg', image)
+    # p = Path(path)  # to Path
+    # save_path = str(save_dir / p.name)
+    # cv2.imwrite(save_path, image)
 
 f.write(f'End Time: {time.time()}\n')
 f.close()

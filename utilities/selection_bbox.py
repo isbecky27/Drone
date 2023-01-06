@@ -15,13 +15,13 @@ def calc_iou_overlap(bboxes, anno_bb):
 
     return intersection / union
 
-def selection_bbox(bboxes, target):
+def selection_bbox(bboxes, target, threshold):
 
     iou_result = np.array(calc_iou_overlap(bboxes, target))
     iou_max = np.argmax(iou_result)
     iou_min = np.argmin(iou_result)
     # print(iou_result[iou_max])
-    if iou_result[iou_max] >= 0.5: ## threshold
+    if iou_result[iou_max] >= threshold: ## threshold
         return bboxes[iou_max]
     else:
         return None
